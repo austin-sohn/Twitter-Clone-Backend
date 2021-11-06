@@ -1,0 +1,6 @@
+id,user_id,post_id,username,text,timestamp,url
+1,1,1,brandon2306,hello!,2021/10/19 17:36:00,
+2,1,2,brandon2306,today is fun,2021/10/20 11:33:00,
+3,2,1,aminta714,I look cool,2021/10/25 12:33:00,
+4,2,2,aminta714,hey!,2021/10/26 12:11:00,timeline/brandon2306/1
+5,3,1,bob123,I like games,2021/10/22 8:11:00,
