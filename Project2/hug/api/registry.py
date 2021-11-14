@@ -3,6 +3,7 @@ from collections import defaultdict
 
 import configparser
 import logging.config
+import time
 
 import hug
 import sqlite_utils
@@ -26,7 +27,7 @@ def healthCheck(url, name):
                 services[name].remove(url)
                 return
 
-        sleep(60) # health check every 60 seconds
+        time.sleep(60) # health check every 60 seconds
 
 def setUpHealthCheck(url, name):
     x = threading.Thread(target=healthCheck, args=(url,name), daemon=True)
