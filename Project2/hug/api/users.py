@@ -4,6 +4,8 @@
 
 import configparser
 import logging.config
+import socket
+import os
 
 import hug
 import sqlite_utils
