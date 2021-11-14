@@ -27,12 +27,25 @@ def sqlite(section="sqlite", key="dbfile", **kwargs):
 def log(name=__name__, **kwargs):
     return logging.getLogger(name)
 
+@hug.cli()
+def custom_verify(username,password):
+    # test it out with this: http -a brandon2306:chonker123 localhost:8000/timelines/bob123/post text="hello this working?"
+    r = requests.get('http://localhost:8000/users/login/' + username)
+    if r.status_code != 200:
+        return False
+    rjson = r.json()
+    for word in rjson["password"]:
+        if word == password:
+            return {"username": username, "password": password}
+
+    return False
+
 # I was not able to make the authentication separate for very user unfortunately
 # The authentication is through one user account and it has full access to all users' home and post privileges
 u = "student"
 p = "password"
 global auth
-auth = hug.authentication.basic(hug.authentication.verify(u,p))
+auth = hug.authentication.basic(custom_verify)
 
 # getUserID function returns user_id given username
 @hug.local()
