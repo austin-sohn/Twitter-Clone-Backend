@@ -80,3 +80,12 @@ def user(response, db: sqlite, username: hug.types.text):
     except sqlite_utils.db.NotFoundError:
         response.status = hug.falcon.HTTP_404
     return {"users": users}
+
+@hug.get("/users/health")
+def checkHealth(response, db: sqlite):
+    try:
+        users = {"users": db["users"].rows_where()}
+        return users;
+    except Exception as e:
+        response.status = hug.falcon.HTTP_409
+        return {"error": str(e)}
