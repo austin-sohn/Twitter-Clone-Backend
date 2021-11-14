@@ -220,3 +220,11 @@ def public(response, db: sqlite):
 #         users.append(row)
 #     if len(users) >= 1:
 #         authentication = hug.authentication.basic(hug.authentication.verify(user_name, pwd))
+@hug.get("/timelines/health")
+def checkHealth(response, db: sqlite):
+    try:
+        posts = {"posts": db["posts"].rows_where()}
+        return posts;
+    except Exception as e:
+        response.status = hug.falcon.HTTP_409
+        return {"error": str(e)}
