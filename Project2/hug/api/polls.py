@@ -2,21 +2,21 @@ from datetime import datetime
 import boto3
 from boto3.dynamodb.conditions import Key
 
-import configparser
-import logging.config
+# import configparser
+# import logging.config
 
 import hug
-import sqlite_utils
+# import sqlite_utils
 
-config = configparser.ConfigParser()
-config.read("./etc/polls.ini")
-# logging.config.fileConfig(config["logging"]["config"], disable_existing_loggers=False)
+# config = configparser.ConfigParser()
+# config.read("./etc/polls.ini")
+# # logging.config.fileConfig(config["logging"]["config"], disable_existing_loggers=False)
 
 
-@hug.directive()
-def sqlite(section="sqlite", key="dbfile", **kwargs):
-    dbfile = config[section][key]
-    return sqlite_utils.Database(dbfile)
+# @hug.directive()
+# def sqlite(section="sqlite", key="dbfile", **kwargs):
+#     dbfile = config[section][key]
+#     return sqlite_utils.Database(dbfile)
 
 # @hug.directive()
 # def log(name=__name__, **kwargs):
@@ -27,7 +27,7 @@ session = boto3.Session(
     aws_secret_access_key = 'fakeSecretAccessKey'
 )
 
-dynamodb = session.resource('dynamodb', endpoint_url='http://localhost:8001')
+dynamodb = session.resource('dynamodb', endpoint_url='http://127.0.0.1:8001')
 
 try:
     # Created table already locally
@@ -70,13 +70,28 @@ try:
                 ],
                 "Projection": {
                     "ProjectionType":"INCLUDE",
-                    "NonKeyAttributes": ["username", "question", "responses","counts"]
+                    "NonKeyAttributes": ["poll_id, username", "question", "responses","counts"]
                 },
                 "ProvisionedThroughput": {
                     "ReadCapacityUnits": 1,
                     "WriteCapacityUnits": 1
                 }
             },
+            # {
+            #     "IndexName": "test_index",
+            #     "KeySchema": [
+            #         {"AttributeName":"poll_id","KeyType":"HASH"},
+            #         {"AttributeName":"creation_date","KeyType":"RANGE"}
+            #     ],
+            #     "Projection": {
+            #         "ProjectionType":"INCLUDE",
+            #         "NonKeyAttributes": ["username", "question", "responses","counts"]
+            #     },
+            #     "ProvisionedThroughput": {
+            #         "ReadCapacityUnits": 1,
+            #         "WriteCapacityUnits": 1
+            #     }
+            # },
             {
                 "IndexName": "poll_id_index",
                 "KeySchema": [
@@ -84,7 +99,7 @@ try:
                 ],
                 "Projection": {
                     "ProjectionType":"INCLUDE",
-                    "NonKeyAttributes": ["voters"]
+                    "NonKeyAttributes": ["creation_date","voters"]
                 },
                 "ProvisionedThroughput": {
                     "ReadCapacityUnits": 1,
@@ -105,7 +120,7 @@ date_time = int(now.strftime("%Y%m%d%H%M%S"))
 
 table = dynamodb.Table('polls')
 
-# # ADD ITEMS
+# ADD ITEMS
 # table.put_item(
 #     Item={
 #         'poll_id': 0,
@@ -133,19 +148,72 @@ table = dynamodb.Table('polls')
 
 @hug.get("/polls")
 def polls():
+    # response = table.scan(
+    #     IndexName="test_index"
+    # )
     response = table.query(
         IndexName="show_index",
         Select="ALL_PROJECTED_ATTRIBUTES",
         KeyConditionExpression=Key('show').eq(1),
-        ScanIndexForward=True
+        ScanIndexForward=False
     )
     items = response['Items']
     return {"polls":items}
 
+@hug.post("/createpoll", status=hug.falcon.HTTP_201)
+def createpoll(
+    response, 
+    username: hug.types.text, 
+    question: hug.types.text, 
+    responses: hug.types.multiple):
+    try:
+        poll_id_query = table.query(
+            IndexName="show_index",
+            Select="ALL_PROJECTED_ATTRIBUTES",
+            KeyConditionExpression=Key('show').eq(1),
+            ScanIndexForward=False,
+            Limit=1
+        )
+        item = poll_id_query['Items']
+        if (len(item) != 0):
+            poll_id = item[0]['poll_id']
+            poll_id = poll_id + 1
+        else:
+            poll_id = 0
+        print(poll_id)
+        poll_output = {
+            "poll_id": poll_id,
+            "username": username,
+            "question": question,
+            "responses": responses,
+        }
+
+        now = datetime.now()
+        date_time = int(now.strftime("%Y%m%d%H%M%S"))
+        
+        counts_temp = [0] * len(responses)
+        voters = []
+        table.put_item(
+            Item={
+                'poll_id': poll_id,
+                'creation_date': date_time,
+                'username': username,
+                'question': question,
+                'responses': responses,
+                'counts': counts_temp,
+                'voters': voters,
+                'show': 1
+            }
+        )
+    except Exception as e:
+        response.status = hug.falcon.HTTP_409
+        return {"error": str(e)}
+    return poll_output
+
+
 @hug.post("/vote", status=hug.falcon.HTTP_201)
 def postVote(
     response,
-    db: sqlite,
     username: hug.types.text,
     poll_id: hug.types.number,
     vote: hug.types.number
@@ -154,7 +222,8 @@ def postVote(
         creation_date_query= table.query(
             IndexName="poll_id_index",
             Select="ALL_PROJECTED_ATTRIBUTES",
-            KeyConditionExpression=Key('poll_id').eq(0)
+            KeyConditionExpression=Key('poll_id').eq(0),
+            Limit=1
         )
         item = creation_date_query['Items']
 
@@ -165,19 +234,19 @@ def postVote(
             "vote": vote,
             "poll_id": poll_id
         }
-        print(item[0]['voters'])
+
         table.update_item(
             Key= {
                 "poll_id": poll_id,
                 "creation_date": creation_date
             },
-            UpdateExpression=f"ADD counts[{vote}] :v SET #V = list_append(#V,:v2)",
+            UpdateExpression=f"ADD counts[{vote}] :v1 SET #V = list_append(#V,:v2)",
             ConditionExpression= "not contains (#V, :v3)",
             ExpressionAttributeNames= {
                 "#V": 'voters'
             },
             ExpressionAttributeValues= {
-                ":v": 1,
+                ":v1": 1,
                 ":v2": [username],
                 ":v3": username
             },
