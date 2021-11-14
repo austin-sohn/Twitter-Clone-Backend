@@ -44,6 +44,11 @@ The web application should now be able to run on **localhost:8000**.
     - **/home/{username}** -- calls setLogin(username) function and redirects user to "/home/{username}/auth"
     - **/home/{username}/auth** -- sends get request to "/users/{username}/followers" endpoint in users service, returns posts of users that the specific user follows (**authentication needed**)
     - **/public** -- returns all existing posts
+3) registry.py
+    - **Important** -- The registry assumes the url provided by registered services has a "/health" route that can return a 200 response to GET requests
+    - **/registry** -- returns all instances of all registered services
+    - **/registry/{servicename}** -- returns all instances of servicename
+    - **/registry/{servicename} POST** -- registers an instance of servicename. The url is provided in the format: text="url"
 
 Authentication: 
 - username=**student** 
