@@ -228,3 +228,9 @@ def checkHealth(response, db: sqlite):
     except Exception as e:
         response.status = hug.falcon.HTTP_409
         return {"error": str(e)}
+  
+@hug.startup()
+def selfRegister(api):
+    registerURL = "http://localhost:8000/registry/posts"
+    url = "http://" + socket.gethostbyname(socket.gethostname()) + ":" + os.environ["PORT"] + "/timelines" 
+    r = requests.post(registerURL, data={"text": url})
