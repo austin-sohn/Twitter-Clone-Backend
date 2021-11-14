@@ -6,6 +6,7 @@ import configparser
 import logging.config
 import socket
 import os
+import requests
 
 import hug
 import sqlite_utils
