@@ -61,7 +61,11 @@ def registerService(
 ):
 
     if name in services:
-        services[name].append(text)
+        if text not in services[name]:
+            services[name].append(text)
+        else:
+            response.status = hug.falcon.HTTP_409
+            return "URL already registered"
     else:
         services[name] = [text]
 
