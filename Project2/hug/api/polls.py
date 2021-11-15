@@ -160,7 +160,7 @@ def polls():
     items = response['Items']
     return {"polls":items}
 
-@hug.post("/createpoll", status=hug.falcon.HTTP_201)
+@hug.post("/polls/create", status=hug.falcon.HTTP_201)
 def createpoll(
     response, 
     username: hug.types.text, 
@@ -211,7 +211,7 @@ def createpoll(
     return poll_output
 
 
-@hug.post("/vote", status=hug.falcon.HTTP_201)
+@hug.post("/polls/vote/{poll_id}", status=hug.falcon.HTTP_201)
 def postVote(
     response,
     username: hug.types.text,
