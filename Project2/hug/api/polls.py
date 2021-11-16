@@ -1,6 +1,9 @@
 from datetime import datetime
 import boto3
 from boto3.dynamodb.conditions import Key
+import os
+import socket
+import requests
 
 # import configparser
 # import logging.config
@@ -258,3 +261,24 @@ def postVote(
             return {"error": "This user has already voted"}
         return {"error": str(e)}
     return vote_output
+
+@hug.get("/polls/health")
+def checkHealth(response, db: sqlite):
+    try:
+        response = table.query(
+            IndexName="show_index",
+            Select="ALL_PROJECTED_ATTRIBUTES",
+            KeyConditionExpression=Key('show').eq(1),
+            ScanIndexForward=False
+        )
+        items = response['Items']
+        return items;
+    except Exception as e:
+        response.status = hug.falcon.HTTP_409
+        return {"error": str(e)}
+
+@hug.startup()
+def selfRegister(api):
+    registerURL = "http://localhost:8000/registry/polls"
+    url = "http://" + socket.gethostbyname(socket.gethostname()) + ":" + os.environ["PORT"] + "/polls"
+    r = requests.post(registerURL, data={"text": url})
