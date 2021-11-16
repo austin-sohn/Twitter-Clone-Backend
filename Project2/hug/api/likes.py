@@ -9,6 +9,9 @@ import hug
 import logging.config
 import redis
 import sqlite_utils
+import os
+import socket
+import requests
 
 config = configparser.ConfigParser()
 config.read("./etc/timelines.ini")
@@ -68,19 +71,24 @@ def user_liked(username: hug.types.text):
 def popular_post():
     output = redisClient.zrevrange(post,0,-1, withscores=True)
     return {"popular":output}
-"""
-@hug.get("/timelines/health")
+
+@hug.get("/polls/health")
 def checkHealth(response, db: sqlite):
     try:
-        posts = {"posts": db["posts"].rows_where()}
-        return posts
+        response = table.query(
+            IndexName="show_index",
+            Select="ALL_PROJECTED_ATTRIBUTES",
+            KeyConditionExpression=Key('show').eq(1),
+            ScanIndexForward=False
+        )
+        items = response['Items']
+        return items;
     except Exception as e:
         response.status = hug.falcon.HTTP_409
         return {"error": str(e)}
-  
+
 @hug.startup()
 def selfRegister(api):
-    registerURL = "http://localhost:8000/registry/posts"
-    url = "http://" + socket.gethostbyname(socket.gethostname()) + ":" + os.environ["PORT"] + "/timelines" 
+    registerURL = "http://localhost:8000/registry/polls"
+    url = "http://" + socket.gethostbyname(socket.gethostname()) + ":" + os.environ["PORT"] + "/polls"
     r = requests.post(registerURL, data={"text": url})
-"""
