@@ -72,23 +72,16 @@ def popular_post():
     output = redisClient.zrevrange(post,0,-1, withscores=True)
     return {"popular":output}
 
-@hug.get("/polls/health")
+@hug.get("/likes/health")
 def checkHealth(response, db: sqlite):
     try:
-        response = table.query(
-            IndexName="show_index",
-            Select="ALL_PROJECTED_ATTRIBUTES",
-            KeyConditionExpression=Key('show').eq(1),
-            ScanIndexForward=False
-        )
-        items = response['Items']
-        return items;
+        return r.ping();
     except Exception as e:
         response.status = hug.falcon.HTTP_409
         return {"error": str(e)}
 
 @hug.startup()
 def selfRegister(api):
-    registerURL = "http://localhost:8000/registry/polls"
-    url = "http://" + socket.gethostbyname(socket.gethostname()) + ":" + os.environ["PORT"] + "/polls"
+    registerURL = "http://localhost:8000/registry/likes"
+    url = "http://" + socket.gethostbyname(socket.gethostname()) + ":" + os.environ["PORT"] + "/likes"
     r = requests.post(registerURL, data={"text": url})
