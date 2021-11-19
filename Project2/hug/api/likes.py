@@ -40,6 +40,7 @@ def fill(db:sqlite):
 fill()
 
 # Like a post
+# http POST localhost:8000/likes/brandon2306/bob123/3
 @hug.post("/likes/{liker_username}/{username}/{post_id}")
 def like(response, liker_username: hug.types.text, username: hug.types.text, post_id: hug.types.text): 
     url = "/likes/" + username + "/" + post_id
@@ -52,6 +53,7 @@ def like(response, liker_username: hug.types.text, username: hug.types.text, pos
     return {"Liked": {"url": url}}
 
 # See how many likes a post has received
+# http GET localhost:8000/likes/count/bob123/3
 @hug.get("/likes/count/{username}/{post_id}")
 def like_counts(username: hug.types.text, post_id: hug.types.text):
     url = "/likes/" + username + "/" + post_id
@@ -59,15 +61,17 @@ def like_counts(username: hug.types.text, post_id: hug.types.text):
     return {"Number of Likes": output}
 
 # Retrieve a list of the posts that another user liked
+# http GET localhost:8000/likes/brandon2306
 @hug.get("/likes/{liker_username}") 
 def user_liked(liker_username: hug.types.text):
     output = redis.zrevrange(liker_username, 0, -1)
     return {"User Likes": output}
 
 # See a list of popular posts that were liked by many users
+# http GET localhost:8000/likes/popular
 @hug.get("/likes/popular")
 def popular_post():
-    output = redis.zrevrange("popular_list", 0, -1)
+    output = redis.zrevrange("popular_list", 0, -1, withscores=True)
     return {"Popular Posts": output}
 
 @hug.get("/likes/health")
