@@ -5,14 +5,15 @@
 # see a list of popular posts that were liked by many users
 
 import configparser
+import logging.config
+import requests
+import socket
+import os
+
 #import hiredis
 import hug
-import logging.config
 import redis
 import sqlite_utils
-import os
-import socket
-import requests
 
 config = configparser.ConfigParser()
 config.read("./etc/timelines.ini")
@@ -39,12 +40,12 @@ def fill(db:sqlite):
 fill()
 
 # Like a post
-@hug.post("/likes/{username}/{post_id}")
-def like(response, username: hug.types.text, post_id: hug.types.text): 
+@hug.post("/likes/{liker_username}/{username}/{post_id}")
+def like(response, liker_username: hug.types.text, username: hug.types.text, post_id: hug.types.text): 
     url = "/likes/" + username + "/" + post_id
     try:
         redis.zincrby("post_list", 1, url)
-        redis.zincrby(username, 1, url)
+        redis.zincrby(liker_username, 1, url)
         redis.zincrby("popular_list", 1, url)
     except:
         response.status = hug.falcon.HTTP_404
@@ -58,9 +59,9 @@ def like_counts(username: hug.types.text, post_id: hug.types.text):
     return {"Number of Likes": output}
 
 # Retrieve a list of the posts that another user liked
-@hug.get("/likes/{username}") 
-def user_liked(username: hug.types.text):
-    output = redis.zrevrange(username, 0, -1)
+@hug.get("/likes/{liker_username}") 
+def user_liked(liker_username: hug.types.text):
+    output = redis.zrevrange(liker_username, 0, -1)
     return {"User Likes": output}
 
 # See a list of popular posts that were liked by many users
