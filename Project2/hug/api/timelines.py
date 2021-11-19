@@ -1,14 +1,10 @@
-# Project 2
-# Brandon Le
-# Ble2306@csu.fullerton.edu
-
 from datetime import datetime
-import requests
-import socket
-import os
 
 import configparser
 import logging.config
+import requests
+import socket
+import os
 
 import hug
 import sqlite_utils
@@ -239,7 +235,7 @@ def public(response, db: sqlite):
 def checkHealth(response, db: sqlite):
     try:
         posts = {"posts": db["posts"].rows_where()}
-        return posts;
+        return posts
     except Exception as e:
         response.status = hug.falcon.HTTP_409
         return {"error": str(e)}

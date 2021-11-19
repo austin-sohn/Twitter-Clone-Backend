@@ -1,7 +1,3 @@
-# Project 2
-# Brandon Le
-# Ble2306@csu.fullerton.edu
-
 import configparser
 import logging.config
 import socket
@@ -28,10 +24,10 @@ def log(name=__name__, **kwargs):
 # getUserID function returns user_id given username
 @hug.local()
 def getUserID(db: sqlite, username: hug.types.text):
-        id_user_generator= db["users"].rows_where("username = :username", {"username": username}, select='user_id')
-        id_user_dict = next(id_user_generator)
-        id_user = id_user_dict["user_id"]
-        return id_user
+    id_user_generator= db["users"].rows_where("username = :username", {"username": username}, select='user_id')
+    id_user_dict = next(id_user_generator)
+    id_user = id_user_dict["user_id"]
+    return id_user
 
 # called by get request from timelines service to find password of user
 @hug.get("/users/login/{username}")
@@ -56,7 +52,7 @@ def followers(response, db: sqlite, username: hug.types.text):
     try:
         id_user = getUserID(db,username)
 
-        #finds user's followers
+        # finds user's followers
         for row in db["follows"].rows_where("user_id = :id_user", {"id_user": id_user}, select='following_id'):
             id_following = row["following_id"]
             follows.append(id_following)
