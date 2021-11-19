@@ -51,9 +51,9 @@ The web application should now be able to run on **localhost:8000**.
     - **/home/{username}/auth** -- sends get request to "/users/{username}/followers" endpoint in users service, returns posts of users that the specific user follows (**authentication needed**)
     - **/public** -- returns all existing posts
 3) likes.py
-    - **/likes/{username}/{post_id}** -- create a like on a specific post
+    - **{liker_username}/{username}/{post_id}** -- create a like on a specific post
     - **/likes/count/{username}/{post_id}** -- get request to see how many likes a specific post received
-    - **/likes/{username}** -- get request to retrieve a list of posts a specific user liked
+    - **/likes/{liker_username}** -- get request to retrieve a list of posts a specific user liked
     - **/likes/popular** -- get request to see a list of popular posts liked by many users
 4) polls.py
     - **/polls**
