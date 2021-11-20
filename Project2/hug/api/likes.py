@@ -28,7 +28,6 @@ def sqlite(section="sqlite", key="dbfile", **kwargs):
     dbfile = config[section][key]
     return sqlite_utils.Database(dbfile)
 
-
 # Adds all id to redis db and sets each like count to 0
 @hug.local()
 def fill(db:sqlite):
@@ -46,7 +45,7 @@ def like(response, liker_username: hug.types.text, username: hug.types.text, pos
     url = "/likes/" + username + "/" + post_id
     try:
         redis.zincrby("post_list", 1, url)
-        redis.zincrby(liker_username, 1, url)
+        redis.sadd(liker_username, url)
         redis.zincrby("popular_list", 1, url)
     except:
         response.status = hug.falcon.HTTP_404
@@ -64,7 +63,7 @@ def like_counts(username: hug.types.text, post_id: hug.types.text):
 # http GET localhost:8000/likes/brandon2306
 @hug.get("/likes/{liker_username}") 
 def user_liked(liker_username: hug.types.text):
-    output = redis.zrevrange(liker_username, 0, -1)
+    output = redis.smembers(liker_username)
     return {"User Likes": output}
 
 # See a list of popular posts that were liked by many users
