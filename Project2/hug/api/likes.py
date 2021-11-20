@@ -49,7 +49,7 @@ def like(response, liker_username: hug.types.text, username: hug.types.text, pos
         redis.zincrby("popular_list", 1, url)
     except:
         response.status = hug.falcon.HTTP_404
-    return {"Liked": {"url": url}}
+    return {"liker_username": liker_username, "url": url}
 
 # See how many likes a post has received
 # http GET localhost:8000/likes/count/bob123/3
@@ -57,7 +57,7 @@ def like(response, liker_username: hug.types.text, username: hug.types.text, pos
 def like_counts(username: hug.types.text, post_id: hug.types.text):
     url = "/likes/" + username + "/" + post_id
     output = redis.zscore("post_list", url)
-    return {"Number of Likes": output}
+    return {"url": url, "total likes": output}
 
 # Retrieve a list of the posts that another user liked
 # http GET localhost:8000/likes/brandon2306
