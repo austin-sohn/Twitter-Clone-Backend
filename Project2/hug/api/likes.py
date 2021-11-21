@@ -20,8 +20,8 @@ config.read("./etc/timelines.ini")
 logging.config.fileConfig(config["logging"]["config"], disable_existing_loggers=False)
 
 #reader = hiredis.Reader()
-redis = redis.Redis(host='localhost', port=6379, db=0)
-redis.flushall() # Deletes db when ran
+red = redis.Redis(host='localhost', port=6379, db=0)
+red.flushall() # Deletes db when ran
 
 @hug.directive()
 def sqlite(section="sqlite", key="dbfile", **kwargs):
@@ -35,7 +35,7 @@ def fill(db:sqlite):
         username = row["username"]
         post_id = row["post_id"]
         url = "/likes/" + username + "/" + str(post_id)
-        redis.zadd("post_list", {url:0})
+        red.zadd("post_list", {url:0})
 fill()
 
 # Like a post
@@ -44,9 +44,9 @@ fill()
 def like(response, liker_username: hug.types.text, username: hug.types.text, post_id: hug.types.text): 
     url = "/likes/" + username + "/" + post_id
     try:
-        redis.zincrby("post_list", 1, url)
-        redis.sadd(liker_username, url)
-        redis.zincrby("popular_list", 1, url)
+        red.zincrby("post_list", 1, url)
+        red.sadd(liker_username, url)
+        red.zincrby("popular_list", 1, url)
     except:
         response.status = hug.falcon.HTTP_404
     return {"liker_username": liker_username, "url": url}
@@ -56,21 +56,21 @@ def like(response, liker_username: hug.types.text, username: hug.types.text, pos
 @hug.get("/likes/count/{username}/{post_id}")
 def like_counts(username: hug.types.text, post_id: hug.types.text):
     url = "/likes/" + username + "/" + post_id
-    output = redis.zscore("post_list", url)
+    output = red.zscore("post_list", url)
     return {"url": url, "total likes": output}
 
 # Retrieve a list of the posts that another user liked
 # http GET localhost:8000/likes/brandon2306
 @hug.get("/likes/{liker_username}") 
 def user_liked(liker_username: hug.types.text):
-    output = redis.smembers(liker_username)
+    output = red.smembers(liker_username)
     return {"User Likes": output}
 
 # See a list of popular posts that were liked by many users
 # http GET localhost:8000/likes/popular
 @hug.get("/likes/popular")
 def popular_post():
-    output = redis.zrevrange("popular_list", 0, -1, withscores=True)
+    output = red.zrevrange("popular_list", 0, -1, withscores=True)
     return {"Popular Posts": output}
 
 @hug.get("/likes/health")
