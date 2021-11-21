@@ -74,9 +74,9 @@ def popular_post():
     return {"Popular Posts": output}
 
 @hug.get("/likes/health")
-def checkHealth(response, db: sqlite):
+def checkHealth(response):
     try:
-        return r.ping()
+        return red.ping()
     except Exception as e:
         response.status = hug.falcon.HTTP_409
         return {"error": str(e)}
