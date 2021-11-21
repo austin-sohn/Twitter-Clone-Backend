@@ -56,7 +56,10 @@ The web application should now be able to run on **localhost:8000**.
     - **/likes/{liker_username}** -- get request to retrieve a list of posts a specific user liked
     - **/likes/popular** -- get request to see a list of popular posts liked by many users
 4) polls.py
-    - **/polls**
+    - **/polls** -- returns all existing polls
+    - **/polls/create** -- POST method that creates post given username, question, and list of responses
+    - **/polls/vote/{poll_id} -- POST method where user can vote a response from a certain post given username, post_id, and the specific response
+        - User cannot vote twice as well.
 5) registry.py
     - **Important** -- the registry assumes the url provided by registered services has a "/health" route that can return a 200 response to GET requests
     - **/registry** -- returns all instances of all registered services
