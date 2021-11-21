@@ -242,6 +242,6 @@ def checkHealth(response, db: sqlite):
   
 @hug.startup()
 def selfRegister(api):
-    registerURL = "http://localhost:8000/registry/posts"
+    registerURL = "http://localhost:8000/registry/timelines"
     url = "http://" + socket.gethostbyname(socket.gethostname()) + ":" + os.environ["PORT"] + "/timelines" 
     r = requests.post(registerURL, data={"text": url})
