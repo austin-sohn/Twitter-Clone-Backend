@@ -272,7 +272,7 @@ def checkHealth(response):
             ScanIndexForward=False
         )
         items = response['Items']
-        return items;
+        return items
     except Exception as e:
         response.status = hug.falcon.HTTP_409
         return {"error": str(e)}
