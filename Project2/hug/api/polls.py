@@ -265,7 +265,7 @@ def postVote(
 @hug.get("/polls/health")
 def checkHealth(response):
     try:
-        q = table.scan(limit=1)
+        q = table.scan(Limit=1)
         items = q['Items']
         return items
     except Exception as e:
