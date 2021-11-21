@@ -263,7 +263,7 @@ def postVote(
     return vote_output
 
 @hug.get("/polls/health")
-def checkHealth(response, db: sqlite):
+def checkHealth(response):
     try:
         response = table.query(
             IndexName="show_index",
