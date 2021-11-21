@@ -2,7 +2,7 @@
 
 ## Project Members
 * Brandon Le (Ble2306@csu.fullerton.edu)
-* Austin Sohn (sohn.austin@gmail.com)
+* Austin Sohn (austinsohn@csu.fullerton.edu)
 * Vien Huynh (Squire25@csu.fullerton.edu)
 * Stephanie Cobb (stephanie_cobb@csu.fullerton.edu)
 
@@ -26,7 +26,7 @@ sqlite-utils add-foreign-key ./var/users.db follows following_id users user_id
 To start the services in production, run these commands in separate command lines:
 ```
 # cd to api directory first!
-foreman start -m users=1,timelines=3,likes=0
+foreman start -m users=1,timelines=3,registry=1,polls=1,likes=1
 # cd to ./etc/haproxy
 haproxy -f haproxy.cfg
 ```
