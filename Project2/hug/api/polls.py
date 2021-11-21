@@ -265,13 +265,8 @@ def postVote(
 @hug.get("/polls/health")
 def checkHealth(response):
     try:
-        response = table.query(
-            IndexName="show_index",
-            Select="ALL_PROJECTED_ATTRIBUTES",
-            KeyConditionExpression=Key('show').eq(1),
-            ScanIndexForward=False
-        )
-        items = response['Items']
+        q = table.scan(limit=1)
+        items = q['Items']
         return items
     except Exception as e:
         response.status = hug.falcon.HTTP_409
