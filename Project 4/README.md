@@ -83,10 +83,10 @@ http -a student:password localhost:8000/timelines/brandon2306/post text="i agree
 Further description on how the data is organized can be seen from the .csv files and .db file
 
 examples using hey:
-
+```
 hey -m POST -a bob123:hello123 http://localhost:8000/timelines/bob123/post text="test" 
 hey -m POST -a bob123:hello123 http://localhost:8000/timelines/bob123/asyncpost text="test"
-
+```
 ## NOTE:
 1) Unfortunately, we were not able to implement the authentication correctly based on each user.
     - the setLogin(username) function does not override the default authentication verify function
