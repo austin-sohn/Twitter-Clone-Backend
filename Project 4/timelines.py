@@ -170,14 +170,42 @@ def create_post(
 @hug.post("/timelines/{username}/asyncpost", status=hug.falcon.HTTP_201, requires=auth)
 def create_post(
     response,
+    db:sqlite,
     username: hug.types.text,
     body: hug.types.json,
 ):
+    posts = db["posts"]
     if not "url" in body:
         body["url"] = ""
-    body["username"] = username
-    msq_queue.put(json.dumps(body))
-    response.status = hug.falcon.HTTP_202
+    
+    try:
+        id_user = getUserID(db, username)
+        body["user_id"] = id_user
+        body["username"] = username
+
+        # set timestamp
+        now = datetime.now()
+        date_time = now.strftime("%Y/%m/%d %H:%M:%S")
+        body["timestamp"] = date_time
+
+        id_post_dict = next(posts.rows_where(select='max(post_id)+1'))
+        # increments post_id before adding to database
+        if id_post_dict["max(post_id)+1"] is None:
+            body["post_id"] = 1
+        else:
+            body["post_id"] = id_post_dict["max(post_id)+1"]
+        posts.insert(body) # insert to table
+        body["id"] = posts.last_pk
+        msq_queue.put(json.dumps(body))
+
+    except Exception as e:
+        response.status = hug.falcon.HTTP_409
+        return {"error": str(e)}
+
+    response.set_header("Location", f"/timeline/{username}/{id_post_dict}")
+    
+
+    
     return body
 
 # http localhost:8000/public
