@@ -12,7 +12,7 @@ By default, the databases (users.db/posts.db) are already created in the /var di
 To create the databases, you can use the init.sh to create the users.db and posts.db
 In the terminal, make sure you're in the correct file directory and type:
 ```
-chmod  +x init.sh
+chmod +x init.sh
 ./init.sh
 ```
 Alternatively, you can run these commands in the command line:
