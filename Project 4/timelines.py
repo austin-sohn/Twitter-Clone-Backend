@@ -194,7 +194,7 @@ def create_post(
     msq_queue.put(body)
 
     response.status = hug.falcon.HTTP_202
-    return
+    return json.loads(body)
 
 # http localhost:8000/public
 # returns all existing posts
