@@ -10,6 +10,9 @@
 By default, the databases (users.db/posts.db) are already created in the /var directory.
 
 To create the databases, you can use the init.sh to create the users.db and posts.db
+In the terminal, make sure you're in the correct file directory and type:
+chmod  +x init.sh
+./init.sh
 
 Alternatively, you can run these commands in the command line:
 ```
@@ -78,6 +81,10 @@ http -a student:password localhost:8000/timelines/terraria2/post text="i like ga
 http -a student:password localhost:8000/timelines/brandon2306/post text="i agree!" url ="/timeline/bob123/1"
 ```
 Further description on how the data is organized can be seen from the .csv files and .db file
+
+# examples using hey
+hey -m POST -a bob123:hello123 http://localhost:8000/timelines/bob123/post text="test" 
+hey -m POST -a bob123:hello123 http://localhost:8000/timelines/bob123/asyncpost text="test"
 
 ## NOTE:
 1) Unfortunately, we were not able to implement the authentication correctly based on each user.
