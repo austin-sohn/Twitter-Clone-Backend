@@ -9,15 +9,18 @@ import logging.config
 import requests
 import socket
 import os
+import json
 
 #import hiredis
 import hug
 import redis
 import sqlite_utils
+import greenstalk
 
 config = configparser.ConfigParser()
 config.read("./etc/timelines.ini")
 logging.config.fileConfig(config["logging"]["config"], disable_existing_loggers=False)
+msq_queue = greenstalk.Client(('127.0.0.1', 11300),use="likes")
 
 #reader = hiredis.Reader()
 red = redis.Redis(host='localhost', port=6379, db=0)
@@ -86,3 +89,13 @@ def selfRegister(api):
     registerURL = "http://localhost:8000/registry/likes"
     url = "http://" + socket.gethostbyname(socket.gethostname()) + ":" + os.environ["PORT"] + "/likes"
     r = requests.post(registerURL, data={"text": url})
+
+@hug.local()
+def call_post_check(post_id,username,liker_username):
+    body = json.dumps({
+        "post_id": text,
+        "username": username,
+        "liker_username": liker_username
+    })
+    msq_queue.put(body)
+    return
