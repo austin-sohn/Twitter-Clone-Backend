@@ -6,6 +6,7 @@ import requests
 import socket
 import os
 import json
+
 import hug
 import sqlite_utils
 import greenstalk
@@ -136,7 +137,9 @@ def create_post(
     body: hug.types.json
 ):
     posts = db["posts"]
-    body["url"]=""
+    if not "url" in body:
+        body["url"] = ""
+
     try:
         id_user = getUserID(db, username)
         body["user_id"] = id_user
@@ -163,13 +166,15 @@ def create_post(
     response.set_header("Location", f"/timeline/{username}/{id_post_dict}")
     return body
 
-# http -a bob123:hello123 localhost:8000/timelines/bob123/asyncpost text="async test"
+# http -m POST -a bob123:hello123 localhost:8000/timelines/bob123/asyncpost text="async test"
 @hug.post("/timelines/{username}/asyncpost", status=hug.falcon.HTTP_201, requires=auth)
 def create_post(
     response,
     username: hug.types.text,
     body: hug.types.json,
 ):
+    if not "url" in body:
+        body["url"] = ""
     body["username"] = username
     msq_queue.put(json.dumps(body))
     response.status = hug.falcon.HTTP_202
