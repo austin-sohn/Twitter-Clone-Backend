@@ -3,3 +3,5 @@ timelines: gunicorn --access-logfile - --capture-output timelines:__hug_wsgi__
 registry: gunicorn --access-logfile - --capture-output registry:__hug_wsgi__
 polls: gunicorn --access-logfile - --capture-output polls:__hug_wsgi__
 likes: gunicorn --access-logfile - --capture-output likes:__hug_wsgi__
+poster: python3 poster.py
+
