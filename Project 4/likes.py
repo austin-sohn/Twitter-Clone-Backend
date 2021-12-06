@@ -20,7 +20,7 @@ import greenstalk
 config = configparser.ConfigParser()
 config.read("./etc/timelines.ini")
 logging.config.fileConfig(config["logging"]["config"], disable_existing_loggers=False)
-msq_queue = greenstalk.Client(('127.0.0.1', 11300),use="likes")
+msq_queue = greenstalk.Client(('127.0.0.1', 11300),watch="likes")
 
 #reader = hiredis.Reader()
 red = redis.Redis(host='localhost', port=6379, db=0)
@@ -44,12 +44,13 @@ fill()
 # Like a post
 # http POST localhost:8000/likes/brandon2306/bob123/3
 @hug.post("/likes/{liker_username}/{username}/{post_id}")
-def like(response, liker_username: hug.types.text, username: hug.types.text, post_id: hug.types.text): 
+def like(response, liker_username: hug.types.text, username: hug.types.text, post_id: hug.types.text):
     url = "/likes/" + username + "/" + post_id
     try:
-        red.zincrby("post_list", 1, url)
+        red.zincrby("post_list", 1, url) # increment post_list by 1
         red.sadd(liker_username, url)
         red.zincrby("popular_list", 1, url)
+        call_post_check(post_id,username,liker_username)
     except:
         response.status = hug.falcon.HTTP_404
     return {"liker_username": liker_username, "url": url}
@@ -64,7 +65,7 @@ def like_counts(username: hug.types.text, post_id: hug.types.text):
 
 # Retrieve a list of the posts that another user liked
 # http GET localhost:8000/likes/brandon2306
-@hug.get("/likes/{liker_username}") 
+@hug.get("/likes/{liker_username}")
 def user_liked(liker_username: hug.types.text):
     output = red.smembers(liker_username)
     return {"User Likes": output}
@@ -76,7 +77,7 @@ def popular_post():
     output = red.zrevrange("popular_list", 0, -1, withscores=True)
     return {"Popular Posts": output}
 
-@hug.get("/likes/health", status=hug.falcon.HTTP_200)
+@hug.get("/likes/health")
 def checkHealth(response):
     try:
         return red.ping()
@@ -92,6 +93,7 @@ def selfRegister(api):
 
 @hug.local()
 def call_post_check(post_id,username,liker_username):
+    msq_queue.use("likes")
     body = json.dumps({
         "post_id": text,
         "username": username,

@@ -7,7 +7,7 @@ import json
 
 config = configparser.ConfigParser()
 config.read("./etc/timelines.ini")
-client = greenstalk.Client(('127.0.0.1', 11300))
+client = greenstalk.Client(('127.0.0.1', 11300),watch="posts")
 
 def getUserID(db, username):
         id_user_generator= db["posts"].rows_where("username = :username", {"username": username}, select='user_id')
@@ -16,25 +16,17 @@ def getUserID(db, username):
         return id_user
 
 def post_loop():
+    client.use("posts")
     while True:
         try:
 
             job = client.reserve()
-            data = json.loads(job.body)
-
+            post = json.loads(job.body)
             dbfile = config["sqlite"]["dbfile"]
             db = sqlite_utils.Database(dbfile)
-            id_user = getUserID(db, data["username"])
-
+            id_user = getUserID(db, post["username"])
             posts = db["posts"]
-
-            # json output
-            post = {
-                "text": data["text"],
-                "url": data["url"],
-                "user_id": data["user_id"],
-                "username": data["username"]
-            }
+            post["user_id"] = id_user
 
             # set timestamp
             now = datetime.now()
@@ -50,9 +42,7 @@ def post_loop():
                 post["post_id"] = id_post_dict["max(post_id)+1"]
 
             posts.insert(post) # insert to table
-
             post["id"] = posts.last_pk
-
             client.delete(job)
 
         except:

@@ -1,14 +1,15 @@
 import redis
 import sqlite_utils
 import configparser
+import greenstalk
 
 red = redis.Redis(host='localhost', port=6379, db=0)
-msq_queue = greenstalk.Client(('127.0.0.1', 11301),use="likes")
+msq_queue = greenstalk.Client(('127.0.0.1', 11300),watch="likes")
 
 config = configparser.ConfigParser()
 config.read("./etc/timelines.ini")
 
-def delete_like(username, post_id):
+def undo_like(username, post_id):
     url = "/likes/" + username + "/" + post_id
     try:
         red.zincrby("post_list", -1, url) # increment post_list by 1
@@ -23,8 +24,9 @@ def delete_like(username, post_id):
 def validate_loop():
     dbfile = config["sqlite"]["dbfile"]
     db = sqlite_utils.Database(dbfile)
+    msq_queue.use("likes")
     while True:
-        job = client.reserve()
+        job = msq_queue.reserve()
         data = json.loads(job.body)
         try:
             id_user = getUserID(db, data["username"])
@@ -34,7 +36,7 @@ def validate_loop():
                 posts.append(row)
 
             if len(posts) == 0:
-                delete_like(data["username"], data["post_id"])
+                undo_like(data["username"], data["post_id"])
 
         except:
             None

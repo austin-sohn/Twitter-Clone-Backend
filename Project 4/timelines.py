@@ -1,10 +1,12 @@
 from datetime import datetime
+
 import configparser
 import logging.config
 import requests
 import socket
 import os
 import json
+
 import hug
 import sqlite_utils
 import greenstalk
@@ -12,7 +14,7 @@ import greenstalk
 config = configparser.ConfigParser()
 config.read("./etc/timelines.ini")
 logging.config.fileConfig(config["logging"]["config"], disable_existing_loggers=False)
-msq_queue = greenstalk.Client(('127.0.0.1', 11300))
+msq_queue = greenstalk.Client(('127.0.0.1', 11300),watch={"posts","polls"})
 
 @hug.directive()
 def sqlite(section="sqlite", key="dbfile", **kwargs):
@@ -51,15 +53,6 @@ def getUserID(db: sqlite, username: hug.types.text):
         id_user = id_user_dict["user_id"]
         return id_user
 
-# suppose to set password and username but auth does not change
-@hug.local()
-def setLogin(username: hug.types.text):
-    r = requests.get(f"""http://127.0.0.1:8000/users/login/{username}""")
-    r_json = r.json()
-    password = r_json["password"]
-    auth = hug.authentication.basic(hug.authentication.verify(username,password))
-
-
 # returns all posts from specific user
 @hug.get("/timelines/{username}")
 def timeline(response, db: sqlite, username: hug.types.text):
@@ -90,12 +83,6 @@ def post(response, db: sqlite, username: hug.types.text, post_id: hug.types.numb
         response.status = hug.falcon.HTTP_404
     return {"posts": posts}
 
-# calls setLogin() then redirects user
-@hug.get("/home/{username}")
-def home_login(username: hug.types.text):
-    setLogin(username)
-    hug.redirect.to(f"""/home/{username}/auth""")
-
 # returns posts from users that the specific user follows
 @hug.get("/home/{username}/auth", requires=auth)
 def home(response, db: sqlite, username: hug.types.text):
@@ -103,6 +90,7 @@ def home(response, db: sqlite, username: hug.types.text):
     conditions = []
     try:
         id_user = getUserID(db, username)
+
         # get request to endpoint in users.db for user's follower list
         r = requests.get(f"""http://127.0.0.1:8000/users/{username}/followers""")
         r_json = r.json()
@@ -123,7 +111,7 @@ def home(response, db: sqlite, username: hug.types.text):
     return {"posts": posts}
 
 # create posts
-# example: http -a bob123:hello123 localhost:8000/timelines/bob123/post text="post test"
+# example: http localhost:8000/timeline/brandon2306/post text="Hello!" url=""
 # if url is filled, then it will be considered a repost
 # else, it will be considered a post
 @hug.post("/timelines/{username}/post", status=hug.falcon.HTTP_201, requires=auth)
@@ -136,7 +124,6 @@ def create_post(
     posts = db["posts"]
     if not "url" in body:
         body["url"] = ""
-
     try:
         id_user = getUserID(db, username)
         body["user_id"] = id_user
@@ -163,17 +150,22 @@ def create_post(
     response.set_header("Location", f"/timeline/{username}/{id_post_dict}")
     return body
 
-# http -m POST -a bob123:hello123 localhost:8000/timelines/bob123/asyncpost text="async test"
+# http -a bob123:hello123 localhost:8000/timelines/bob123/asyncpost text="i like movies"
 @hug.post("/timelines/{username}/asyncpost", status=hug.falcon.HTTP_201, requires=auth)
-def create_asyncpost(
+def create_post(
     response,
+    db: sqlite,
     username: hug.types.text,
     body: hug.types.json,
 ):
+    msq_queue.use("posts")
     body["username"] = username
+    if not "url" in body:
+        body["url"] = ""
     msq_queue.put(json.dumps(body))
     response.status = hug.falcon.HTTP_202
     return body
+
 
 # http localhost:8000/public
 # returns all existing posts
