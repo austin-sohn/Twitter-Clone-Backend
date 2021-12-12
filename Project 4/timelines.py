@@ -38,11 +38,6 @@ def custom_verify(username,password):
 
     return False
 
-# I was not able to make the authentication separate for very user unfortunately
-# The authentication is through one user account and it has full access to all users' home and post privileges
-u = "student"
-p = "password"
-global auth
 auth = hug.authentication.basic(custom_verify)
 
 # getUserID function returns user_id given username
@@ -84,7 +79,7 @@ def post(response, db: sqlite, username: hug.types.text, post_id: hug.types.numb
     return {"posts": posts}
 
 # returns posts from users that the specific user follows
-@hug.get("/home/{username}/auth", requires=auth)
+@hug.get("/home/{username}")
 def home(response, db: sqlite, username: hug.types.text):
     posts = []
     conditions = []
@@ -157,15 +152,22 @@ def create_post(
     db: sqlite,
     username: hug.types.text,
     body: hug.types.json,
-):
-    msq_queue.use("posts")
-    body["username"] = username
-    if not "url" in body:
-        body["url"] = ""
-    msq_queue.put(json.dumps(body))
-    response.status = hug.falcon.HTTP_202
-    return body
+):   
 
+    try:
+        body["username"] = username
+        if not "url" in body:
+            body["url"] = ""
+        else:
+            msq_queue.use("polls")
+            msq_queue.put(json.dumps(body))
+        msq_queue.use("posts")
+        msq_queue.put(json.dumps(body))
+    except Exception as e:
+        response.status = hug.falcon.HTTP_409
+        return {"error": str(e)}
+
+    return body
 
 # http localhost:8000/public
 # returns all existing posts

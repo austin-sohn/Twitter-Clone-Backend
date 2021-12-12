@@ -119,8 +119,37 @@ def polls():
         KeyConditionExpression=Key('show').eq(1),
         ScanIndexForward=False
     )
+    
     items = response['Items']
     return {"polls":items}
+
+@hug.get("/polls/{poll_id}", status=hug.falcon.HTTP_200)
+def getPoll(
+    response,
+    poll_id: hug.types.number
+):
+    try:
+        creation_date_query = table.query(
+            IndexName="poll_id_index",
+            # Select="ALL_PROJECTED_ATTRIBUTES",
+            KeyConditionExpression=Key('poll_id').eq(poll_id),
+            Limit=1
+        )
+        item = creation_date_query['Items']
+        creation_date = item[0]['creation_date']
+
+        item = table.get_item(
+            Key={
+                'poll_id': poll_id,
+                'creation_date': creation_date
+            },
+        )
+        print(item)
+        
+    except Exception as e:
+        response.status = hug.falcon.HTTP_404
+        return {"error": str(e)}
+    return item['Item']
 
 # POST method for creating a poll given username, question, and list of responses
 @hug.post("/polls/create", status=hug.falcon.HTTP_201)
@@ -143,7 +172,7 @@ def createpoll(
             poll_id = poll_id + 1
         else:
             poll_id = 0
-        print(poll_id)
+
         poll_output = {
             "poll_id": poll_id,
             "username": username,
@@ -166,7 +195,7 @@ def createpoll(
                 'counts': counts_temp,
                 'voters': voters,
                 'show': 1
-            }
+            },
         )
     except Exception as e:
         response.status = hug.falcon.HTTP_409
@@ -185,7 +214,7 @@ def postVote(
         creation_date_query= table.query(
             IndexName="poll_id_index",
             Select="ALL_PROJECTED_ATTRIBUTES",
-            KeyConditionExpression=Key('poll_id').eq(0),
+            KeyConditionExpression=Key('poll_id').eq(poll_id),
             Limit=1
         )
         item = creation_date_query['Items']
