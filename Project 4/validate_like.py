@@ -13,7 +13,6 @@ config.read("./etc/timelines.ini")
 def undo_like(liker_username, username, post_id):
     url = "/likes/" + username + "/" + post_id
     try:
-        print("undoing")
         red.zincrby("post_list", -1, url) # increment post_list by -1
         red.srem(liker_username, url)
         red.zincrby("popular_list", -1, url)
