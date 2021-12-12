@@ -91,11 +91,10 @@ def selfRegister(api):
     url = "http://" + socket.gethostbyname(socket.gethostname()) + ":" + os.environ["PORT"] + "/likes"
     r = requests.post(registerURL, data={"text": url})
 
-@hug.local()
 def call_post_check(post_id,username,liker_username):
     msq_queue.use("likes")
     body = json.dumps({
-        "post_id": text,
+        "post_id": post_id,
         "username": username,
         "liker_username": liker_username
     })
