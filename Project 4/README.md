@@ -30,7 +30,7 @@ sqlite-utils add-foreign-key ./var/users.db follows following_id users user_id
 To start the services in production, run these commands in separate command lines:
 ```
 # cd to api directory first!
-foreman start -m users=1,timelines=3,registry=1,polls=1,likes=1,poster=1
+foreman start -m users=1,timelines=3,registry=1,polls=1,likes=1,async_post=1,poller=1, validate_like=1, validate_poll=1
 # cd to ./etc/haproxy
 haproxy -f haproxy.cfg
 ```
@@ -62,7 +62,7 @@ The web application should now be able to run on **localhost:8000**.
 4) polls.py
     - **/polls** -- returns all existing polls
     - **/polls/create** -- POST method that creates post given username, question, and list of responses
-    - **/polls/vote/{poll_id} -- POST method where user can vote a response from a certain post given username, post_id, and the specific response
+    - **/polls/vote/{poll_id}** -- POST method where user can vote a response from a certain post given username, post_id, and the specific response
         - User cannot vote twice as well.
 5) registry.py
     - **Important** -- the registry assumes the url provided by registered services has a "/health" route that can return a 200 response to GET requests
@@ -77,9 +77,10 @@ Authentication:
 You can also create a post as a certain user by running these commands in a new command line:
 ```
 # examples for creating post
-http -a student:password localhost:8000/timelines/bob123/post text="today sucks!"
-http -a student:password localhost:8000/timelines/terraria2/post text="i like games"
-http -a student:password localhost:8000/timelines/brandon2306/post text="i agree!" url ="/timeline/bob123/1"
+http -a bob123:hello123 localhost:8000/timelines/bob123/post text="today sucks!"
+http -a bob123:hello123 localhost:8000/timelines/terraria2/post text="i like games"
+http -a bob123:hello123 localhost:8000/timelines/brandon2306/post text="i agree!" url ="http://localhost:8000/timeline/bob123/1"
+http -a bob123:hello123 localhost:8000/timelines/brandon2306/post text="i agree!" url ="http://localhost:8000/polls/10"
 ```
 Further description on how the data is organized can be seen from the .csv files and .db file
 
